@@ -2,6 +2,7 @@ package com.company.myresourceserver.controller;
 
 
 import com.company.myresourceserver.dto.UserDto;
+import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -13,9 +14,15 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/users")
 public class UsersController {
 
+    private final Environment environment;
+
+    public UsersController(Environment environment) {
+        this.environment = environment;
+    }
+
     @GetMapping("/status/check")
     public String status() {
-        return "Working...";
+        return "Working on port: " + environment.getProperty("local.server.port");
     }
 
     @PreAuthorize("hasAuthority('ROLE_developer') or #id == #jwt.subject")
