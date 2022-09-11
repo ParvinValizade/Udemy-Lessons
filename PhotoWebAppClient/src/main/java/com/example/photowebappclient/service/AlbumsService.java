@@ -15,7 +15,7 @@ import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.Model;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.List;
 
@@ -23,44 +23,28 @@ import java.util.List;
 public class AlbumsService {
 
     private  final OAuth2AuthorizedClientService oAuth2ClientService;
-    private final RestTemplate restTemplate;
+    private final WebClient webClient;
 
-    public AlbumsService(OAuth2AuthorizedClientService oAuth2ClientService, RestTemplate restTemplate) {
+    public AlbumsService(OAuth2AuthorizedClientService oAuth2ClientService, WebClient webClient) {
         this.oAuth2ClientService = oAuth2ClientService;
-        this.restTemplate = restTemplate;
+        this.webClient = webClient;
     }
+//    private final RestTemplate restTemplate;
+
+//    public AlbumsService(OAuth2AuthorizedClientService oAuth2ClientService, RestTemplate restTemplate) {
+//        this.oAuth2ClientService = oAuth2ClientService;
+//        this.restTemplate = restTemplate;
+//    }
 
     public String getAllAlbums(Model model,OidcUser principal){
 
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        OAuth2AuthenticationToken oauthToken = (OAuth2AuthenticationToken) authentication;
-
-        OAuth2AuthorizedClient oauth2Client = oAuth2ClientService.loadAuthorizedClient(oauthToken.getAuthorizedClientRegistrationId(),
-                oauthToken.getName());
-
-        String jwtAccessToken = oauth2Client.getAccessToken().getTokenValue();
-        System.out.println("jwtAccessToken = "+jwtAccessToken);
-
-        System.out.println("Principal = "+principal);
-        OidcIdToken idToken = principal.getIdToken();
-        String idTokenValue = idToken.getTokenValue();
-        System.out.println("idTokenValue = "+idTokenValue);
-
-
-
         String url = "http://localhost:8082/albums";
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("Authorization","Bearer "+jwtAccessToken);
 
-        HttpEntity<List<AlbumDto>> entity = new HttpEntity<>(headers);
-
-
-        ResponseEntity<List<AlbumDto>> responseEntity =
-                restTemplate.exchange(url, HttpMethod.GET, entity,
-                        new ParameterizedTypeReference<>() {
-                        });
-
-        List<AlbumDto> albums = responseEntity.getBody();
+        List<AlbumDto> albums = webClient.get()
+                .uri(url)
+                        .retrieve()
+                                .bodyToMono(new ParameterizedTypeReference<List<AlbumDto>>() {
+                                }).block();
 
 //        AlbumDto album = new AlbumDto();
 //        album.setAlbumId("albumOne");
